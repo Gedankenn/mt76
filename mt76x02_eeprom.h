@@ -15,6 +15,7 @@ enum mt76x02_eeprom_field {
 	MT_EE_MAC_ADDR =			0x004,
 	MT_EE_PCI_ID =				0x00A,
 	MT_EE_ANTENNA =				0x022,
+	MT_EE_CMB_CONF =			0x024,
 	MT_EE_CFG1_INIT =			0x024,
 	MT_EE_NIC_CONF_0 =			0x034,
 	MT_EE_NIC_CONF_1 =			0x036,

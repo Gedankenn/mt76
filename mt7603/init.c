@@ -469,7 +469,8 @@ mt7603_init_txpower(struct mt7603_dev *dev,
 	dev->tx_power_limit = target_power;
 	dev->mphy.txpower_cur = target_power;
 
-	target_power = DIV_ROUND_UP(target_power, 2);
+	//target_power = DIV_ROUND_UP(target_power, 2);
+
 
 	/* add 3 dBm for 2SS devices (combined output) */
 	if (dev->mphy.antenna_mask & BIT(1))
@@ -478,7 +479,7 @@ mt7603_init_txpower(struct mt7603_dev *dev,
 	for (i = 0; i < sband->n_channels; i++) {
 		chan = &sband->channels[i];
 		chan->max_power = min_t(int, chan->max_reg_power, target_power);
-		chan->orig_mpwr = target_power;
+		chan->orig_mpwr = target_power*2;
 	}
 }
 
