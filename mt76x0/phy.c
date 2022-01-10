@@ -427,9 +427,8 @@ static void mt76x0_phy_ant_select(struct mt76x02_dev *dev)
 {
 	u16 ee_ant = mt76x02_eeprom_get(dev, MT_EE_ANTENNA);
 	u16 ee_cfg1 = mt76x02_eeprom_get(dev, MT_EE_CFG1_INIT);
-	u16 ee_cmb = mt76x02_eeprom_get(dev, MT_EE_CMB_CONF);
 	u16 nic_conf2 = mt76x02_eeprom_get(dev, MT_EE_NIC_CONF_2);
-	u32 wlan, coex3 cmb, xo1;
+	u32 wlan, coex3;
 	bool ant_div;
 
 	wlan = mt76_rr(dev, MT_WLAN_FUN_CTRL);
@@ -843,19 +842,31 @@ static void mt76x0_phy_tssi_calibrate(struct mt76x02_dev *dev)
 void mt76x0_phy_set_txpower(struct mt76x02_dev *dev)
 {
 	struct mt76_rate_power *t = &dev->mt76.rate_power;
+	//s8 info;
 	s8 info, ee_max_power, delta, txpower_conf;
 
 	mt76x0_get_tx_power_per_rate(dev, dev->mphy.chandef.chan, t);
 	mt76x0_get_power_info(dev, dev->mphy.chandef.chan, &info);
 
+	/*mt76x02_add_rate_power_offset(t, info);
+	mt76x02_limit_rate_power(t, dev->txpower_conf);
+	dev->mphy.txpower_cur = mt76x02_get_max_rate_power(t);
+	mt76x02_add_rate_power_offset(t, -info);*/
+
 	ee_max_power = info + mt76x02_get_max_rate_power(t);
 	txpower_conf = DIV_ROUND_UP(dev->txpower_conf, 2);
 	delta = (ee_max_power > txpower_conf) ? (ee_max_power - txpower_conf) : 0;
 
+	//dev->target_power = info;
+	//mt76x02_phy_set_txpower(dev, info, info);
+
 	dev->target_power = ee_max_power - delta;
+
 	dev->mphy.txpower_cur = dev->target_power * 2;
 
 	mt76x02_phy_set_txpower(dev, info - delta, 0);
+
+
 }
 
 void mt76x0_phy_calibrate(struct mt76x02_dev *dev, bool power_on)

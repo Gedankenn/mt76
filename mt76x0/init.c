@@ -230,7 +230,7 @@ mt76x0_init_txpower(struct mt76x02_dev *dev,
 		chan->orig_mpwr = (mt76x02_get_max_rate_power(&t) + tp);
 		chan->max_power = min_t(int, chan->max_reg_power,
 					chan->orig_mpwr);
-		chan->orig_mpwr = chan->orig_mpwr*2;
+		chan->orig_mpwr = chan->orig_mpwr * 2;
 	}
 }
 
