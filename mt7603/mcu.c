@@ -382,7 +382,7 @@ static int mt7603_mcu_set_tx_power(struct mt7603_dev *dev)
 	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD_SET_TX_POWER_CTRL,
 				 &req, sizeof(req), true);
 
-	printk("Target_power: %d\n",req.target_power);
+	printk("[mt7603_mcu_set_tx_power] Target_power: %d : %d\n",req.target_power[0],req.target_power[1]);
 }
 
 int mt7603_mcu_set_channel(struct mt7603_dev *dev)
@@ -432,5 +432,8 @@ int mt7603_mcu_set_channel(struct mt7603_dev *dev)
 	if (ret)
 		return ret;
 
+
+	printk("[mt7603_mcu_set_channel] tx_power: %d \n",tx_power);
+	
 	return mt7603_mcu_set_tx_power(dev);
 }
