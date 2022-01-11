@@ -4,7 +4,7 @@
 #include "mt7603.h"
 #include "mcu.h"
 #include "eeprom.h"
-#include <linux/etherdevice.h>
+//#include <linux/etherdevice.h>
 
 #define MCU_SKB_RESERVE	8
 
@@ -383,7 +383,7 @@ static int mt7603_mcu_set_tx_power(struct mt7603_dev *dev)
 	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD_SET_TX_POWER_CTRL,
 				 &req, sizeof(req), true);
 
-	printk("[mt7603_mcu_set_tx_power] Target_power: %d : %d\n",req.target_power[0],req.target_power[1]);
+	//printk("[mt7603_mcu_set_tx_power] Target_power: %d : %d\n",req.target_power[0],req.target_power[1]);
 }
 
 int mt7603_mcu_set_channel(struct mt7603_dev *dev)
