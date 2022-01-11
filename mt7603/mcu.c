@@ -340,7 +340,7 @@ int mt7603_mcu_set_eeprom(struct mt7603_dev *dev)
 
 static int mt7603_mcu_set_tx_power(struct mt7603_dev *dev)
 {
-	printk("Entra na função de setar o TX POWER\n");
+	//printk("Entra na função de setar o TX POWER\n");
 	struct {
 		u8 center_channel;
 		u8 tssi;
@@ -382,7 +382,7 @@ static int mt7603_mcu_set_tx_power(struct mt7603_dev *dev)
 	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD_SET_TX_POWER_CTRL,
 				 &req, sizeof(req), true);
 
-	printk("[mt7603_mcu_set_tx_power] Target_power: %d : %d\n",req.target_power[0],req.target_power[1]);
+	//printk("[mt7603_mcu_set_tx_power] Target_power: %d : %d\n",req.target_power[0],req.target_power[1]);
 }
 
 int mt7603_mcu_set_channel(struct mt7603_dev *dev)
@@ -433,7 +433,7 @@ int mt7603_mcu_set_channel(struct mt7603_dev *dev)
 		return ret;
 
 
-	printk("[mt7603_mcu_set_channel] tx_power: %d \n",tx_power);
+	//printk("[mt7603_mcu_set_channel] tx_power: %d \n",tx_power);
 	
 	return mt7603_mcu_set_tx_power(dev);
 }
