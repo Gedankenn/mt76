@@ -6,7 +6,7 @@
 #include "eeprom.h"
 //#include <linux/etherdevice.h>
 
-#define var_txpower 20
+#define var_txpower 66
 
 #define MCU_SKB_RESERVE	8
 
