@@ -479,7 +479,7 @@ mt7603_init_txpower(struct mt7603_dev *dev,
 
 	/* add 3 dBm for 2SS devices (combined output) */
 	if (dev->mphy.antenna_mask & BIT(1))
-		target_power += 3;
+		target_power += 6;
 
 	for (i = 0; i < sband->n_channels; i++) {
 		chan = &sband->channels[i];
