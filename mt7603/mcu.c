@@ -435,7 +435,7 @@ int mt7603_mcu_set_channel(struct mt7603_dev *dev)
 		return ret;
 
 
-	printk("[mt7603_mcu_set_channel] tx_power: %d \n",tx_power);
+	printk("[mt7603_mcu_set_channel]  tx_power: %d \n",tx_power);
 	
 	return mt7603_mcu_set_tx_power(dev);
 }
