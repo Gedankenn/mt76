@@ -6,6 +6,8 @@
 #include "eeprom.h"
 //#include <linux/etherdevice.h>
 
+#define var_txpower 20
+
 #define MCU_SKB_RESERVE	8
 
 struct mt7603_fw_trailer {
@@ -381,7 +383,7 @@ static int mt7603_mcu_set_tx_power(struct mt7603_dev *dev)
 	memcpy(req.temp_comp_power, eep + MT_EE_STEP_NUM_NEG_6_7,
 	       sizeof(req.temp_comp_power));
 
-	req.target_power[0]=60;
+	req.target_power[0]=var_txpower;
 	printk("[mt7603_mcu_set_tx_power] Target_power: %d : %d\n",req.target_power[0],req.target_power[1]);
 	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD_SET_TX_POWER_CTRL,
 				 &req, sizeof(req), true);
@@ -424,6 +426,8 @@ int mt7603_mcu_set_channel(struct mt7603_dev *dev)
 	if (dev->mphy.antenna_mask == 3)
 		tx_power -= 6;
 	tx_power = min(tx_power, dev->tx_power_limit);
+
+	tx_power = var_txpower;
 
 	dev->mphy.txpower_cur = tx_power;
 
