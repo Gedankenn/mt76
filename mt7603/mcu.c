@@ -381,6 +381,7 @@ static int mt7603_mcu_set_tx_power(struct mt7603_dev *dev)
 	memcpy(req.temp_comp_power, eep + MT_EE_STEP_NUM_NEG_6_7,
 	       sizeof(req.temp_comp_power));
 
+	req.target_power[0]=60;
 	printk("[mt7603_mcu_set_tx_power] Target_power: %d : %d\n",req.target_power[0],req.target_power[1]);
 	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD_SET_TX_POWER_CTRL,
 				 &req, sizeof(req), true);
