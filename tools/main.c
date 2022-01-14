@@ -2,17 +2,7 @@
 /* Copyright (C) 2020 Felix Fietkau <nbd@nbd.name> */
 #define _GNU_SOURCE
 
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <unistd.h>
 #include <stdio.h>
-#include <stdbool.h>
-#include <errno.h>
-#include <poll.h>
-#include <fcntl.h>
-#include <signal.h>
 #include "mt76-test.h"
 
 struct unl unl;
@@ -166,7 +156,7 @@ static int mt76_set(int phy, int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-	const char *cmd, *phyname;
+	const char *cmd;
 	int phy;
 	int ret = 0;
 
@@ -179,8 +169,7 @@ int main(int argc, char **argv)
 		return 2;
 	}
 
-	phyname = argv[1];
-	phy = phy_lookup_idx(phyname);
+	phy = phy_lookup_idx(argv[1]);
 	if (phy < 0) {
 		fprintf(stderr, "Could not find phy '%s'\n", argv[1]);
 		return 2;
@@ -196,8 +185,6 @@ int main(int argc, char **argv)
 		ret = mt76_set(phy, argc, argv);
 	else if (!strcmp(cmd, "eeprom"))
 		ret = mt76_eeprom(phy, argc, argv);
-	else if (!strcmp(cmd, "fwlog"))
-		ret = mt76_fwlog(phyname, argc, argv);
 	else
 		usage();
 
