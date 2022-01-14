@@ -464,13 +464,7 @@ mt7603_init_txpower(struct mt7603_dev *dev,
 		max_offset = max(max_offset, cur_offset);
 	}
 
-	printk("Kernel print teste:\n");
-	printk("MT_EE_TX_POWER_TSSI_OFF = %x\n",MT_EE_TX_POWER_TSSI_OFF);
-	printk("target_power = %d\n",target_power);
-
 	target_power += max_offset;
-
-	target_power = 66;
 
 	dev->tx_power_limit = target_power;
 	dev->mphy.txpower_cur = target_power;
@@ -479,13 +473,12 @@ mt7603_init_txpower(struct mt7603_dev *dev,
 
 	/* add 3 dBm for 2SS devices (combined output) */
 	if (dev->mphy.antenna_mask & BIT(1))
-		target_power += 6;
+		target_power += 3;
 
 	for (i = 0; i < sband->n_channels; i++) {
 		chan = &sband->channels[i];
-		//chan->max_power = min_t(int, chan->max_reg_power, target_power);
+		chan->max_power = min_t(int, chan->max_reg_power, target_power);
 		chan->orig_mpwr = target_power;
-		chan->max_power = target_power;
 	}
 }
 

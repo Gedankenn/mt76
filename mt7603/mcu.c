@@ -4,9 +4,6 @@
 #include "mt7603.h"
 #include "mcu.h"
 #include "eeprom.h"
-//#include <linux/etherdevice.h>
-
-#define var_txpower 66
 
 #define MCU_SKB_RESERVE	8
 
@@ -375,19 +372,14 @@ static int mt7603_mcu_set_tx_power(struct mt7603_dev *dev)
 	};
 	u8 *eep = (u8 *)dev->mt76.eeprom.data;
 
-	printk("Entra na função de setar o TX POWER\n");
-
 	memcpy(req.rate_power_delta, eep + MT_EE_TX_POWER_CCK,
 	       sizeof(req.rate_power_delta));
 
 	memcpy(req.temp_comp_power, eep + MT_EE_STEP_NUM_NEG_6_7,
 	       sizeof(req.temp_comp_power));
 
-	req.target_power[0]=var_txpower;
-	printk("[mt7603_mcu_set_tx_power] Target_power: %d : %d\n",req.target_power[0],req.target_power[1]);
 	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD_SET_TX_POWER_CTRL,
 				 &req, sizeof(req), true);
-
 }
 
 int mt7603_mcu_set_channel(struct mt7603_dev *dev)
@@ -427,8 +419,6 @@ int mt7603_mcu_set_channel(struct mt7603_dev *dev)
 		tx_power -= 6;
 	tx_power = min(tx_power, dev->tx_power_limit);
 
-	tx_power = var_txpower;
-
 	dev->mphy.txpower_cur = tx_power;
 
 	for (i = 0; i < ARRAY_SIZE(req.txpower); i++)
@@ -439,8 +429,5 @@ int mt7603_mcu_set_channel(struct mt7603_dev *dev)
 	if (ret)
 		return ret;
 
-
-	printk("[mt7603_mcu_set_channel]  tx_power: %d \n",tx_power);
-	
 	return mt7603_mcu_set_tx_power(dev);
 }
