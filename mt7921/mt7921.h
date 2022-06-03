@@ -8,6 +8,7 @@
 #include <linux/ktime.h>
 #include "../mt76_connac_mcu.h"
 #include "regs.h"
+#include "acpi_sar.h"
 
 #define MT7921_MAX_INTERFACES		4
 #define MT7921_MAX_WMM_SETS		4
@@ -30,6 +31,7 @@
 
 #define MT7921_DRV_OWN_RETRY_COUNT	10
 #define MT7921_MCU_INIT_RETRY_COUNT	10
+#define MT7921_WFSYS_INIT_RETRY_COUNT	2
 
 #define MT7921_FIRMWARE_WM		"mediatek/WIFI_RAM_CODE_MT7961_1.bin"
 #define MT7921_ROM_PATCH		"mediatek/WIFI_MT7961_patch_mcu_1_2_hdr.bin"
@@ -154,7 +156,6 @@ struct mt7921_phy {
 
 	struct ieee80211_sband_iftype_data iftype[NUM_NL80211_BANDS][NUM_NL80211_IFTYPES];
 
-	u32 rxfilter;
 	u64 omac_mask;
 
 	u16 noise;
@@ -171,6 +172,9 @@ struct mt7921_phy {
 
 	struct sk_buff_head scan_event_list;
 	struct delayed_work scan_work;
+#ifdef CONFIG_ACPI
+	struct mt7921_acpi_sar *acpisar;
+#endif
 };
 
 #define mt7921_init_reset(dev)		((dev)->hif_ops->init_reset(dev))
@@ -204,11 +208,17 @@ struct mt7921_dev {
 	struct list_head sta_poll_list;
 	spinlock_t sta_poll_lock;
 
+	struct work_struct init_work;
+
 	u8 fw_debug;
 
 	struct mt76_connac_pm pm;
 	struct mt76_connac_coredump coredump;
 	const struct mt7921_hif_ops *hif_ops;
+
+	struct work_struct ipv6_ns_work;
+	/* IPv6 addresses for WoWLAN */
+	struct sk_buff_head ipv6_ns_list;
 };
 
 enum {
@@ -271,12 +281,6 @@ mt7921_hw_dev(struct ieee80211_hw *hw)
 	mt76_connac_mutex_acquire(&(dev)->mt76, &(dev)->pm)
 #define mt7921_mutex_release(dev)	\
 	mt76_connac_mutex_release(&(dev)->mt76, &(dev)->pm)
-
-static inline u8 mt7921_lmac_mapping(struct mt7921_dev *dev, u8 ac)
-{
-	/* LMAC uses the reverse order of mac80211 AC indexes */
-	return 3 - ac;
-}
 
 extern const struct ieee80211_ops mt7921_ops;
 extern struct pci_driver mt7921_pci_driver;
@@ -358,17 +362,20 @@ static inline void mt7921_mcu_tx_cleanup(struct mt7921_dev *dev)
 	mt76_queue_tx_cleanup(dev, dev->mt76.q_mcu[MT_MCUQ_WA], false);
 }
 
-static inline void mt7921_skb_add_sdio_hdr(struct sk_buff *skb,
-					   enum mt7921_sdio_pkt_type type)
+static inline void
+mt7921_skb_add_usb_sdio_hdr(struct mt7921_dev *dev, struct sk_buff *skb,
+			    int type)
 {
-	u32 hdr;
+	u32 hdr, len;
 
-	hdr = FIELD_PREP(MT7921_SDIO_HDR_TX_BYTES, skb->len + sizeof(hdr)) |
+	len = mt76_is_usb(&dev->mt76) ? skb->len : skb->len + sizeof(hdr);
+	hdr = FIELD_PREP(MT7921_SDIO_HDR_TX_BYTES, len) |
 	      FIELD_PREP(MT7921_SDIO_HDR_PKT_TYPE, type);
 
 	put_unaligned_le32(hdr, skb_push(skb, sizeof(hdr)));
 }
 
+void mt7921_stop(struct ieee80211_hw *hw);
 int mt7921_mac_init(struct mt7921_dev *dev);
 bool mt7921_mac_wtbl_update(struct mt7921_dev *dev, int idx, u32 mask);
 void mt7921_mac_reset_counters(struct mt7921_phy *phy);
@@ -390,7 +397,6 @@ int mt7921e_tx_prepare_skb(struct mt76_dev *mdev, void *txwi_ptr,
 
 void mt7921_tx_worker(struct mt76_worker *w);
 void mt7921e_tx_complete_skb(struct mt76_dev *mdev, struct mt76_queue_entry *e);
-int mt7921_init_tx_queues(struct mt7921_phy *phy, int idx, int n_desc);
 void mt7921_tx_token_put(struct mt7921_dev *dev);
 void mt7921_queue_rx_skb(struct mt76_dev *mdev, enum mt76_rxq_id q,
 			 struct sk_buff *skb);
@@ -415,7 +421,6 @@ int mt7921_mcu_drv_pmctrl(struct mt7921_dev *dev);
 int mt7921_mcu_fw_pmctrl(struct mt7921_dev *dev);
 void mt7921_pm_wake_work(struct work_struct *work);
 void mt7921_pm_power_save_work(struct work_struct *work);
-bool mt7921_wait_for_mcu_init(struct mt7921_dev *dev);
 void mt7921_coredump_work(struct work_struct *work);
 int mt7921_wfsys_reset(struct mt7921_dev *dev);
 int mt7921_get_txpwr_info(struct mt7921_dev *dev, struct mt7921_txpwr *txpwr);
@@ -443,17 +448,59 @@ int mt7921e_mcu_init(struct mt7921_dev *dev);
 int mt7921s_wfsys_reset(struct mt7921_dev *dev);
 int mt7921s_mac_reset(struct mt7921_dev *dev);
 int mt7921s_init_reset(struct mt7921_dev *dev);
+int __mt7921e_mcu_drv_pmctrl(struct mt7921_dev *dev);
 int mt7921e_mcu_drv_pmctrl(struct mt7921_dev *dev);
 int mt7921e_mcu_fw_pmctrl(struct mt7921_dev *dev);
 
 int mt7921s_mcu_init(struct mt7921_dev *dev);
 int mt7921s_mcu_drv_pmctrl(struct mt7921_dev *dev);
 int mt7921s_mcu_fw_pmctrl(struct mt7921_dev *dev);
-int mt7921s_tx_prepare_skb(struct mt76_dev *mdev, void *txwi_ptr,
-			   enum mt76_txq_id qid, struct mt76_wcid *wcid,
-			   struct ieee80211_sta *sta,
-			   struct mt76_tx_info *tx_info);
-void mt7921s_tx_complete_skb(struct mt76_dev *mdev, struct mt76_queue_entry *e);
-bool mt7921s_tx_status_data(struct mt76_dev *mdev, u8 *update);
 void mt7921_mac_add_txs(struct mt7921_dev *dev, void *data);
+void mt7921_set_runtime_pm(struct mt7921_dev *dev);
+void mt7921_mcu_set_suspend_iter(void *priv, u8 *mac,
+				 struct ieee80211_vif *vif);
+void mt7921_set_ipv6_ns_work(struct work_struct *work);
+
+int mt7921_mcu_set_sniffer(struct mt7921_dev *dev, struct ieee80211_vif *vif,
+			   bool enable);
+
+int mt7921_usb_sdio_tx_prepare_skb(struct mt76_dev *mdev, void *txwi_ptr,
+				   enum mt76_txq_id qid, struct mt76_wcid *wcid,
+				   struct ieee80211_sta *sta,
+				   struct mt76_tx_info *tx_info);
+void mt7921_usb_sdio_tx_complete_skb(struct mt76_dev *mdev,
+				     struct mt76_queue_entry *e);
+bool mt7921_usb_sdio_tx_status_data(struct mt76_dev *mdev, u8 *update);
+
+/* usb */
+#define MT_USB_TYPE_VENDOR	(USB_TYPE_VENDOR | 0x1f)
+#define MT_USB_TYPE_UHW_VENDOR	(USB_TYPE_VENDOR | 0x1e)
+
+int mt7921u_mcu_power_on(struct mt7921_dev *dev);
+int mt7921u_wfsys_reset(struct mt7921_dev *dev);
+int mt7921u_dma_init(struct mt7921_dev *dev, bool resume);
+int mt7921u_init_reset(struct mt7921_dev *dev);
+int mt7921u_mac_reset(struct mt7921_dev *dev);
+int mt7921_mcu_uni_add_beacon_offload(struct mt7921_dev *dev,
+				      struct ieee80211_hw *hw,
+				      struct ieee80211_vif *vif,
+				      bool enable);
+#ifdef CONFIG_ACPI
+int mt7921_init_acpi_sar(struct mt7921_dev *dev);
+int mt7921_init_acpi_sar_power(struct mt7921_phy *phy, bool set_default);
+#else
+static inline int
+mt7921_init_acpi_sar(struct mt7921_dev *dev)
+{
+	return 0;
+}
+
+static inline int
+mt7921_init_acpi_sar_power(struct mt7921_phy *phy, bool set_default)
+{
+	return 0;
+}
+#endif
+int mt7921_set_tx_sar_pwr(struct ieee80211_hw *hw,
+			  const struct cfg80211_sar_specs *sar);
 #endif
