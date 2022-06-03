@@ -45,9 +45,11 @@ enum {
 };
 
 struct mt76_connac_pm {
-	bool enable;
-	bool ds_enable;
-	bool suspended;
+	bool enable:1;
+	bool enable_user:1;
+	bool ds_enable:1;
+	bool ds_enable_user:1;
+	bool suspended:1;
 
 	spinlock_t txq_lock;
 	struct {
@@ -115,6 +117,11 @@ static inline bool is_mt7916(struct mt76_dev *dev)
 	return mt76_chip(dev) == 0x7906;
 }
 
+static inline bool is_mt7986(struct mt76_dev *dev)
+{
+	return mt76_chip(dev) == 0x7986;
+}
+
 static inline bool is_mt7622(struct mt76_dev *dev)
 {
 	if (!IS_ENABLED(CONFIG_MT7622_WMAC))
@@ -155,6 +162,12 @@ static inline u8 mt76_connac_chan_bw(struct cfg80211_chan_def *chandef)
 		return 0;
 
 	return width_to_bw[chandef->width];
+}
+
+static inline u8 mt76_connac_lmac_mapping(u8 ac)
+{
+	/* LMAC uses the reverse order of mac80211 AC indexes */
+	return 3 - ac;
 }
 
 int mt76_connac_pm_wake(struct mt76_phy *phy, struct mt76_connac_pm *pm);

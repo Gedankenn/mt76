@@ -51,8 +51,7 @@ enum mt76x02_eeprom_field {
 	MT_EE_TX_POWER_0_GRP3_TX_POWER_DELTA =	0x074,
 	MT_EE_TX_POWER_0_GRP4_TSSI_SLOPE =	0x076,
 
-	//MT_EE_TX_POWER_1_START_5G =		0x080,
-	MT_EE_TX_POWER_1_START_5G = 0x08F,
+	MT_EE_TX_POWER_1_START_5G =		0x080,
 
 	MT_EE_TX_POWER_CCK =			0x0a0,
 	MT_EE_TX_POWER_OFDM_2G_6M =		0x0a2,
@@ -67,7 +66,7 @@ enum mt76x02_eeprom_field {
 	MT_EE_TX_POWER_VHT_MCS4 =		0x0bc,
 	MT_EE_TX_POWER_VHT_MCS8 =		0x0be,
 
-	MT_EE_2G_TARGET_POWER =			0x0d2,
+	MT_EE_2G_TARGET_POWER =			0x0d0,
 	MT_EE_TEMP_OFFSET =			0x0d1,
 	MT_EE_5G_TARGET_POWER =			0x0d2,
 	MT_EE_TSSI_BOUND1 =			0x0d4,
@@ -143,7 +142,7 @@ mt76x02_sign_extend(u32 val, unsigned int size)
 
 	val &= BIT(size - 1) - 1;
 
-	return sign ? -val : val;
+	return sign ? val : -val;
 }
 
 static inline int
