@@ -371,13 +371,17 @@ static int mt7603_mcu_set_tx_power(struct mt7603_dev *dev)
 #undef EEP_VAL
 	};
 	u8 *eep = (u8 *)dev->mt76.eeprom.data;
-
+	printf("##################################### SET TX POWER #########################################\n");
+	printf("target power = %d|%d\n",(int)req.target_power[0],(int)req.target_power[1]);
+	
 	memcpy(req.rate_power_delta, eep + MT_EE_TX_POWER_CCK,
 	       sizeof(req.rate_power_delta));
 
 	memcpy(req.temp_comp_power, eep + MT_EE_STEP_NUM_NEG_6_7,
 	       sizeof(req.temp_comp_power));
 
+	// Tentar alterar aqui o valor tbm. seria interessante
+	req.target_power = {30,30}
 	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD_SET_TX_POWER_CTRL,
 				 &req, sizeof(req), true);
 }
