@@ -457,7 +457,6 @@ mt7603_init_txpower(struct mt7603_dev *dev,
 
 	if (target_power & BIT(6))
 		target_power = -(target_power & GENMASK(5, 0));
-
 	max_offset = 0;
 	for (i = 0; i < 14; i++) {
 		cur_offset = mt7603_txpower_signed(rate_power[i]);
@@ -470,8 +469,10 @@ mt7603_init_txpower(struct mt7603_dev *dev,
 	dev->mphy.txpower_cur = target_power;
 
 	target_power = DIV_ROUND_UP(target_power, 2);
+	//nosso limite maximo é de 27db + 3 da antena.
 
 	/* add 3 dBm for 2SS devices (combined output) */
+	target_power = 27;
 	if (dev->mphy.antenna_mask & BIT(1))
 		target_power += 3;
 
