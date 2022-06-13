@@ -381,8 +381,8 @@ static int mt7603_mcu_set_tx_power(struct mt7603_dev *dev)
 	       sizeof(req.temp_comp_power));
 
 	// Tentar alterar aqui o valor tbm. seria interessante
-	req.target_power[0] = 27;
-	req.target_power[1] = 27;
+	//req.target_power[0] = 27;
+	//req.target_power[1] = 27;
 	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD_SET_TX_POWER_CTRL,
 				 &req, sizeof(req), true);
 }
