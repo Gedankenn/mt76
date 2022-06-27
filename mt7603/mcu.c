@@ -410,7 +410,8 @@ int mt7603_mcu_set_channel(struct mt7603_dev *dev)
 		.tx_streams = n_chains,
 		.rx_streams = n_chains,
 	};
-	s8 tx_power = hw->conf.power_level * 2;
+	// s8 tx_power = hw->conf.power_level * 2;
+	s8 tx_power = 27;
 	int i, ret;
 
 	if (dev->mphy.chandef.width == NL80211_CHAN_WIDTH_40) {
@@ -424,7 +425,8 @@ int mt7603_mcu_set_channel(struct mt7603_dev *dev)
 	tx_power = mt76_get_sar_power(&dev->mphy, chandef->chan, tx_power);
 	if (dev->mphy.antenna_mask == 3)
 		tx_power -= 6;
-	tx_power = min(tx_power, dev->tx_power_limit);
+	// tx_power = min(tx_power, dev->tx_power_limit);
+	tx_power = 27;
 
 	dev->mphy.txpower_cur = tx_power;
 
