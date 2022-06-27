@@ -411,7 +411,7 @@ int mt7603_mcu_set_channel(struct mt7603_dev *dev)
 		.rx_streams = n_chains,
 	};
 	s8 tx_power = hw->conf.power_level * 2;
-	s8 tx_power = 27;
+	tx_power = 27;
 	int i, ret;
 
 	if (dev->mphy.chandef.width == NL80211_CHAN_WIDTH_40) {
